@@ -9,7 +9,9 @@
 
 
 import sys
+import hid
 from PySide import QtCore, QtGui
+import time
 
 
 class Display(QtGui.QWidget):
@@ -20,7 +22,10 @@ class Display(QtGui.QWidget):
         grid_left = QtGui.QGridLayout()
         grid_right = QtGui.QGridLayout()
 
-        red = QtGui.QPixmap("images/statusRed.png").scaled(QtCore.QSize(30, 30))
+        self.red = QtGui.QPixmap("images/statusRed.png").scaled(QtCore.QSize(30, 30))
+        self.green = QtGui.QPixmap("images/statusGreen.png").scaled(QtCore.QSize(30, 30))
+
+        self.colors = [self.red, self.green]
 
         self.pins = ["GND1", "D-", "D+", "GND4", "RC0", "RC1", "RC2",
                      "RC3", "RC4", "RC5", "RA3", "RA4", "RA5", "VDD"]
@@ -88,33 +93,9 @@ class Display(QtGui.QWidget):
                 self.button_toggle[key].clicked.connect(lambda key=key: self.sendToggle(key))
                 grid_left.addWidget(self.label[key], j, 3)
                 grid_left.addWidget(self.status[key], j, 4)
-                self.status[key].setPixmap(red)
+                self.status[key].setPixmap(self.red)
             else:
                 grid_left.addWidget(self.label[key], j, 3, 1, 2)
-        """
-        grid_left.addWidget(self.label[self.pins[1]], 1, 3, 1, 2)
-        # Pin 2:  D-
-        grid_left.addWidget(self.label[self.pins[2]], 2, 3, 1, 2)
-        # Pin 3:  D+
-        grid_left.addWidget(self.label[self.pins[3]], 3, 3, 1, 2)
-        # Pin 4: GROUND
-        grid_left.addWidget(self.label[self.pins[4]], 4, 3, 1, 2)
-        # Pin 5: RC0
-        grid_left.addWidget(self.button_pulse[self.pins[5]], 5, 1)
-        grid_left.addWidget(self.button_toggle[self.pins[5]], 5, 2)
-        grid_left.addWidget(self.label[self.pins[5]], 5, 3)
-        grid_left.addWidget(self.status[self.pins[5]], 5, 4)
-        # Pin 6: RC1
-        grid_left.addWidget(self.button_pulse[self.pins[6]], 6, 1)
-        grid_left.addWidget(self.button_toggle[self.pins[6]], 6, 2)
-        grid_left.addWidget(self.label[self.pins[6]], 6, 3)
-        grid_left.addWidget(self.status[self.pins[6]], 6, 4)
-        # Pin 7: RC2
-        grid_left.addWidget(self.button_pulse[self.pins[7]], 7, 1)
-        grid_left.addWidget(self.button_toggle[self.pins[7]], 7, 2)
-        grid_left.addWidget(self.label[self.pins[7]], 7, 3)
-        grid_left.addWidget(self.status[self.pins[7]], 7, 4)
-        """
 
         # #### CENTER IMAGE #### #
         vbox = QtGui.QVBoxLayout()
@@ -132,7 +113,7 @@ class Display(QtGui.QWidget):
             j = 14 - i
             if(self.status[key] is not None):
                 grid_right.addWidget(self.status[key], j, 1)
-                self.status[key].setPixmap(red)
+                self.status[key].setPixmap(self.red)
                 grid_right.addWidget(self.label[key], j, 2)
                 grid_right.addWidget(self.button_toggle[key], j, 3)
                 self.button_toggle[key].clicked.connect(lambda key=key: self.sendToggle(key))
@@ -140,43 +121,6 @@ class Display(QtGui.QWidget):
                 self.button_pulse[key].clicked.connect(lambda key=key: self.sendPulse(key))
             else:
                 grid_right.addWidget(self.label[key], j, 1, 1, 4)
-
-        """
-        # Pin 14: VDD
-        grid_right.addWidget(self.label[self.pins[14]], 1, 1, 1, 4)
-        # Pin 13: RA5
-        grid_right.addWidget(self.status[self.pins[13]], 2, 1)
-        grid_right.addWidget(self.label[self.pins[13]], 2, 2)
-        grid_right.addWidget(self.button_toggle[self.pins[13]], 2, 3)
-        grid_right.addWidget(self.button_pulse[self.pins[13]], 2, 4)
-        # Pin 12: RA4
-        grid_right.addWidget(self.status[self.pins[12]], 3, 1)
-        grid_right.addWidget(self.label[self.pins[12]], 3, 2)
-        grid_right.addWidget(self.button_toggle[self.pins[12]], 3, 3)
-        grid_right.addWidget(self.button_pulse[self.pins[12]], 3, 4)
-        # Pin 11: RA3 / MCLR#
-        grid_right.addWidget(self.status[self.pins[11]], 4, 1)
-        grid_right.addWidget(self.label[self.pins[11]], 4, 2)
-        grid_right.addWidget(self.button_toggle[self.pins[11]], 4, 3)
-        grid_right.addWidget(self.button_pulse[self.pins[11]], 4, 4)
-        # Pin 10: RC5
-        grid_right.addWidget(self.status[self.pins[10]], 5, 1)
-        grid_right.addWidget(self.label[self.pins[10]], 5, 2)
-        grid_right.addWidget(self.button_toggle[self.pins[10]], 5, 3)
-        grid_right.addWidget(self.button_pulse[self.pins[10]], 5, 4)
-        # Pin 9: RC4
-        grid_right.addWidget(self.status[self.pins[9]], 6, 1)
-        grid_right.addWidget(self.label[self.pins[9]], 6, 2)
-        grid_right.addWidget(self.button_toggle[self.pins[9]], 6, 3)
-        grid_right.addWidget(self.button_pulse[self.pins[9]], 6, 4)
-        self.button_pulse[self.pins[9]].clicked.connect(lambda: self.sendPulse(self.pins[9]))
-        self.button_toggle[self.pins[9]].clicked.connect(lambda: self.sendToggle(self.pins[9]))
-        # Pin 8: RC3
-        grid_right.addWidget(self.status[self.pins[8]], 7, 1)
-        grid_right.addWidget(self.label[self.pins[8]], 7, 2)
-        grid_right.addWidget(self.button_toggle[self.pins[8]], 7, 3)
-        grid_right.addWidget(self.button_pulse[self.pins[8]], 7, 4)
-        """
 
         hbox.addLayout(grid_left)
         hbox.addLayout(vbox)
@@ -187,13 +131,53 @@ class Display(QtGui.QWidget):
         self.setWindowTitle("USBreadboardIT")
         # -self.setWindowState(QtCore.Qt.WindowMaximized)
 
+        self.offset = {'RC0': 30,
+                       'RC1': 31,
+                       'RC2': 32,
+                       'RC3': 33,
+                       'RC4': 34,
+                       'RC5': 35,
+                       'RA3': 13,
+                       'RA4': 14,
+                       'RA5': 15}
+
+        self.g = hid.device()
+        self.g.open(vendor_id=0xA0A0, product_id=0x0009)
+        self.g.write([0x00, 0x02, 0x00, 0x00, 0x00])  # Set mode
+        self.g.write([0x00, 0x03])  # Get value
+        x = self.g.read(4)
+        print(x)
+
+        for i in range(14):
+            key = self.pins[i]
+            if self.status[key] is not None:
+                status = (x[self.offset[key] / 10] >> (self.offset[key] % 10)) & 0x01
+                self.status[key].setPixmap(self.colors[status])
+
+    def __del__(self):
+        self.g.close()
+
     @QtCore.Slot()
     def sendPulse(self, pin):
         print("PULSE on %s" % pin)
+        self.g.write([0x00, 0x08, self.offset[pin], 0x01])
+        time.sleep(0.2)
+        self.g.write([0x00, 0x08, self.offset[pin], 0x00])
 
     @QtCore.Slot()
     def sendToggle(self, pin):
         print("TOGGLE on %s" % pin)
+        self.g.write([0x00, 0x03])  # Get value
+        x = self.g.read(4)
+        status = (x[self.offset[pin] / 10] >> (self.offset[pin] % 10)) & 0x01
+
+        if(status == 0x01):
+            x[self.offset[pin] / 10] &= ~(0x01 << (self.offset[pin] % 10))
+        else:
+            x[self.offset[pin] / 10] |= (0x01 << (self.offset[pin] % 10))
+
+        response = [0x00, 0x04, x[1], x[2], x[3]]
+        self.g.write(response)  # Set mode
 
 if __name__ == '__main__':
 
